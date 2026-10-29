@@ -23,19 +23,33 @@ function Write-Log {
     }
 }
 
+# Função auxiliar para criar diretórios se eles não existirem
+function Create-Directory {
+    param (
+        [string]$FullPath
+    )
+
+    if (-not (Test-Path -Path $FullPath -PathType Container)) {
+        New-Item -Path $FullPath -ItemType Directory -Force | Out-Null
+
+        # Descomente a linha abaixo se quiser depurar a criação de diretórios
+        #Write-Host "Diretório '$FullPath' criado com sucesso." -ForegroundColor Green
+    }
+}
+
 # Introduz o script e verifica a decisão do usuário
 Write-Host "Bem-vindo(a) ao Script de Configuração de Ambiente de Desenvolvimento para o Windows 11 (ARM64)!"
 Write-Host "Este script irá instalar e configurar as seguintes ferramentas no seu computador:`n - VS Code (ARM64);`n - .NET SDK 10 (ARM64);`n - Node.js via NVM (ARM64);`n - Python via UV (ARM64);`n - Git (ARM64);`n - Visual Studio Installer (OPCIONAL)."
 Write-Host "Para maiores informações, acesse: https://github.com/rodrigocdellu/setup.`n"
-Read-Host "Pressione qualquer tecla para executar o script ou feche a janela para interromper o processo."
+Read-Host "Pressione qualquer tecla para executar o script ou feche a janela para interromper o processo"
 
 # 0. Parâmetros gerais
-$GitUserName = "rodrigocdellu"
-$GitUserEmail = "rodrigocdellu.trabalho@outlook.com"
+$GitUserName = "rodrigocdelluTESTE"
+$GitUserEmail = "rodrigocdellu.trabalho@outlook.comTESTE"
 
 # 1. Configura o arquivo de log no mesmo diretório do script
 $ScriptDir = Split-Path -Parent $MyInvocation.MyCommand.Path
-$LogPath = Join-Path $ScriptDir "../Logs"; if (-not (Test-Path $LogPath)) { New-Item -Path $LogPath -ItemType Directory }
+Create-Directory (Join-Path $ScriptDir "../Logs")
 $LogFile = Join-Path $ScriptDir "../Logs/ConfigurarAmbienteDesenvolvimento-win11-arm64.log"
 
 # 2. Inicializa com o arquivo de log limpo
