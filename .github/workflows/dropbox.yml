@@ -44,26 +44,30 @@ jobs:
       # Envia o arquivo ZIP para a pasta de backup no Dropbox
       - name: Enviar backup para Dropbox
         env:
-          # Obtém o token de acesso do segredo configurado no GitHub. O token não deve ser escrito diretamente neste arquivo
+          # Lê o token armazenado nos Repository secrets do GitHub
           DROPBOX_TOKEN: ${{ secrets.DROPBOX_ACCESS_TOKEN }}
 
-          # Obtém o SHA completo do commit que acionou o workflow
+          # SHA do commit que está sendo copiado
           GITHUB_SHA: ${{ github.sha }}
         shell: bash
         run: |
           # Interrompe a execução se algum comando falhar
           set -euo pipefail
 
-          # Define o caminho e o nome do arquivo ZIP gerado
+          # Define o caminho e o nome do arquivo ZIP
           FILE="dist/setup-${GITHUB_SHA:0:12}.zip"
           FILENAME="$(basename "$FILE")"
 
-          # Envia o arquivo para a API de upload do Dropbox. O parâmetro "add" evita substituir arquivos existentes
+          # Monta os argumentos da API como JSON válido
+          DROPBOX_API_ARG="$(jq -cn \
+            --arg path "/Setup/${FILENAME}" \
+            '{path: $path, mode: "add", autorename: false}')"
+
+          # Envia o ZIP para o Dropbox
           curl --fail-with-body --silent --show-error \
             --request POST \
             --url "https://content.dropboxapi.com/2/files/upload" \
             --header "Authorization: Bearer ${DROPBOX_TOKEN}" \
-
             --header "Content-Type: application/octet-stream" \
-            --header "Dropbox-API-Arg: {\"path\":\"/Backups/setup/${FILENAME}\",\"mode\":\"add\",\"autorename\":false}" \
+            --header "Dropbox-API-Arg: ${DROPBOX_API_ARG}" \
             --data-binary "@${FILE}"
