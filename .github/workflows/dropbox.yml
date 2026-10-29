@@ -1,36 +1,69 @@
-# This is a basic workflow to help you get started with Actions
+# Nome do workflow exibido na aba Actions do GitHub
+name: Backup para Dropbox
 
-name: CI
-
-# Controls when the workflow will run
+# Define quando o workflow será executado
 on:
-  # Triggers the workflow on push or pull request events but only for the "main" branch
+  # Executa automaticamente quando houver um push na branch main
   push:
-    branches: [ "main" ]
-  pull_request:
-    branches: [ "main" ]
+    branches: ["main"]
 
-  # Allows you to run this workflow manually from the Actions tab
+  # Permite executar o backup manualmente pela interface do GitHub
   workflow_dispatch:
 
-# A workflow run is made up of one or more jobs that can run sequentially or in parallel
+# Define as permissões concedidas ao GITHUB_TOKEN
+permissions:
+  # Permite apenas ler o conteúdo do repositório
+  contents: read
+
 jobs:
-  # This workflow contains a single job called "build"
-  build:
-    # The type of runner that the job will run on
+  backup:
+    # Executa as etapas em uma máquina virtual Linux hospedada pelo GitHub
     runs-on: ubuntu-latest
 
-    # Steps represent a sequence of tasks that will be executed as part of the job
     steps:
-      # Checks-out your repository under $GITHUB_WORKSPACE, so your job can access it
-      - uses: actions/checkout@v4
+      # Baixa o conteúdo do repositório para o ambiente de execução
+      - name: Checkout do repositório
+        uses: actions/checkout@v4
 
-      # Runs a single command using the runners shell
-      - name: Run a one-line script
-        run: echo Hello, world!
-
-      # Runs a set of commands using the runners shell
-      - name: Run a multi-line script
+      # Cria um arquivo ZIP contendo os arquivos versionados no commit, sem incluir o histórico do Git nem a pasta .git
+      - name: Gerar ZIP sem histórico Git
+        shell: bash
         run: |
-          echo Add other actions to build,
-          echo test, and deploy your project.
+          # Interrompe a execução se algum comando falhar
+          set -euo pipefail
+
+          # Cria a pasta onde o arquivo ZIP será armazenado
+          mkdir -p dist
+
+          # Exporta os arquivos versionados do commit atual para um ZIP. Os primeiros 12 caracteres do SHA identificam o commit
+          git archive \
+            --format=zip \
+            --output="dist/setup-${GITHUB_SHA:0:12}.zip" \
+            HEAD
+
+      # Envia o arquivo ZIP para a pasta de backup no Dropbox
+      - name: Enviar backup para Dropbox
+        env:
+          # Obtém o token de acesso do segredo configurado no GitHub. O token não deve ser escrito diretamente neste arquivo
+          DROPBOX_TOKEN: ${{ secrets.DROPBOX_ACCESS_TOKEN }}
+
+          # Obtém o SHA completo do commit que acionou o workflow
+          GITHUB_SHA: ${{ github.sha }}
+        shell: bash
+        run: |
+          # Interrompe a execução se algum comando falhar
+          set -euo pipefail
+
+          # Define o caminho e o nome do arquivo ZIP gerado
+          FILE="dist/setup-${GITHUB_SHA:0:12}.zip"
+          FILENAME="$(basename "$FILE")"
+
+          # Envia o arquivo para a API de upload do Dropbox. O parâmetro "add" evita substituir arquivos existentes
+          curl --fail-with-body --silent --show-error \
+            --request POST \
+            --url "https://content.dropboxapi.com/2/files/upload" \
+            --header "Authorization: Bearer ${DROPBOX_TOKEN}" \
+
+            --header "Content-Type: application/octet-stream" \
+            --header "Dropbox-API-Arg: {\"path\":\"/Backups/setup/${FILENAME}\",\"mode\":\"add\",\"autorename\":false}" \
+            --data-binary "@${FILE}"
