@@ -41,11 +41,11 @@ function Create-Directory {
 Write-Host "Bem-vindo(a) ao Script de Configuração de Ambiente de Desenvolvimento para o Windows 11 (ARM64)!"
 Write-Host "Este script irá instalar e configurar as seguintes ferramentas no seu computador:`n - VS Code (ARM64);`n - .NET SDK 10 (ARM64);`n - Node.js via NVM (ARM64);`n - Python via UV (ARM64);`n - Git (ARM64);`n - Visual Studio Installer (OPCIONAL)."
 Write-Host "Para maiores informações, acesse: https://github.com/rodrigocdellu/setup.`n"
-Read-Host "Pressione qualquer tecla para executar o script ou feche a janela para interromper o processo"
+Read-Host "Pressione <ENTER> para executar o script ou feche a janela para interromper o processo"
 
 # 0. Parâmetros gerais
-$GitUserName = "rodrigocdelluTESTE"
-$GitUserEmail = "rodrigocdellu.trabalho@outlook.comTESTE"
+$GitUserName = "rodrigocdellu"
+$GitUserEmail = "rodrigocdellu.trabalho@outlook.com"
 
 # 1. Configura o arquivo de log no mesmo diretório do script
 $ScriptDir = Split-Path -Parent $MyInvocation.MyCommand.Path
@@ -335,7 +335,7 @@ if ($ResultGitHub -match '^[Ss]$') {
 }
 
 # 8. Verifica a decisão do usuário
-Read-Host "Pressione qualquer tecla para finalizar o Script de Configuração de Ambiente de Desenvolvimento para o Windows 11 (ARM64)"
+Read-Host "Pressione <ENTER> para finalizar o Script de Configuração de Ambiente de Desenvolvimento para o Windows 11 (ARM64)"
 
 Stop-Process -Id $PID
 
